@@ -1382,23 +1382,50 @@ timeline.push(lecture_video);
     }
   };
 
+  // ==================================================
+  // DataPipe保存と保存結果の確認
+  // ==================================================
+
+  let data_save_success = false;
+
+  save_data.on_finish = function(data) {
+    // jsPsychPipe が返す保存結果を確認する
+    // success が false の場合は保存失敗として扱う
+    data_save_success = data.success !== false;
+    console.log("DataPipe保存結果：", data);
+  };
+
   timeline.push(save_data);
 
 
   // ==================================================
-  // 保存完了画面
+  // 保存結果画面
   // ==================================================
 
   timeline.push({
     type: jsPsychHtmlButtonResponse,
-    stimulus: `
-      <div class="instruction">
-        <h2>実験は終了しました</h2>
-        <p>回答処理が終了しました。</p>
-        <p>このページを閉じてください。</p>
-        <p>ご参加いただき、ありがとうございました。</p>
-      </div>
-    `,
+    stimulus: function() {
+      if (data_save_success) {
+        return `
+          <div class="instruction">
+            <h2>実験は終了しました</h2>
+            <p>回答データの送信が完了しました。</p>
+            <p>このページを閉じてください。</p>
+            <p>ご参加いただき、ありがとうございました。</p>
+          </div>
+        `;
+      }
+
+      return `
+        <div class="instruction">
+          <h2>データを送信できませんでした</h2>
+          <p>通信状況などにより、回答データの送信を確認できませんでした。</p>
+          <p>お手数をお掛けしますが、このページを閉じず、研究実施者までご連絡ください。</p>
+          <p>研究実施者　関西大学社会学部心理学専攻<br>
+          氏名　細川芽生（k187988@kansai-u.ac.jp）</p>
+        </div>
+      `;
+    },
     choices: []
   });
 
