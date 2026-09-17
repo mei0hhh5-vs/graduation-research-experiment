@@ -9,6 +9,7 @@
   <link href="https://unpkg.com/jspsych@8.2.1/css/jspsych.css" rel="stylesheet">
 
   <script src="https://unpkg.com/@jspsych/plugin-html-button-response@2.1.0"></script>
+  <script src="https://unpkg.com/@jspsych-contrib/plugin-pipe@0.6.0"></script>
 
   <style>
 
@@ -135,6 +136,10 @@
   const jsPsych = initJsPsych();
 
   const timeline = [];
+
+  // DataPipe保存用：参加者ごとに重複しにくいランダムIDを作成
+  const subject_id = jsPsych.randomization.randomID(10);
+  const filename = `${subject_id}.csv`;
 
 
 
@@ -1242,6 +1247,39 @@ timeline.push(lecture_video);
 
     }
 
+  });
+
+
+  // ==================================================
+  // DataPipe：全実験データをCSVとしてOSFへ保存
+  // ==================================================
+
+  const save_data = {
+    type: jsPsychPipe,
+    action: "save",
+    experiment_id: "8FAluUxho7QR",
+    filename: filename,
+    data_string: () => jsPsych.data.get().csv()
+  };
+
+  timeline.push(save_data);
+
+
+  // ==================================================
+  // 保存完了画面
+  // ==================================================
+
+  timeline.push({
+    type: jsPsychHtmlButtonResponse,
+    stimulus: `
+      <div class="instruction">
+        <h2>実験は終了しました</h2>
+        <p>回答データの送信が完了しました。</p>
+        <p>このページを閉じてください。</p>
+        <p>ご参加いただき、ありがとうございました。</p>
+      </div>
+    `,
+    choices: []
   });
 
 
