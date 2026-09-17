@@ -1,0 +1,1257 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <title>卒業研究実験</title>
+
+  <script src="https://unpkg.com/jspsych@8.2.1"></script>
+  <link href="https://unpkg.com/jspsych@8.2.1/css/jspsych.css" rel="stylesheet">
+
+  <script src="https://unpkg.com/@jspsych/plugin-html-button-response@2.1.0"></script>
+
+  <style>
+
+    body {
+      font-family: sans-serif;
+    }
+
+    .instruction {
+      max-width: 800px;
+      margin: 0 auto;
+      text-align: left;
+      font-size: 20px;
+      line-height: 1.8;
+    }
+
+    .instruction h2 {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .instruction p {
+      margin-bottom: 20px;
+    }
+
+    .question {
+      max-width: 800px;
+      margin: 0 auto;
+      font-size: 22px;
+      line-height: 1.8;
+    }
+
+    .question p {
+      margin-bottom: 30px;
+    }
+
+
+    /* =========================
+       動画
+       ========================= */
+
+    #video-container {
+      position: relative;
+      width: 800px;
+      margin: auto;
+    }
+
+    #lecture-video {
+      width: 800px;
+      display: block;
+    }
+
+    #video-start-overlay {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(255, 255, 255, 0.9);
+      display: flex; align-items: center; justify-content: center; z-index: 10;
+    }
+
+    #video-start-button { font-size: 24px; padding: 15px 30px; }
+
+
+    /* =========================
+       Probe
+       ========================= */
+
+    #probe-overlay {
+      display: none;
+
+      position: absolute;
+      top: 0;
+      left: 0;
+
+      width: 800px;
+      height: 100%;
+
+      background: white;
+
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+    }
+
+    #probe-overlay p {
+      font-size: 24px;
+      margin-bottom: 40px;
+    }
+
+    #probe-overlay button {
+      font-size: 20px;
+      margin: 10px;
+      padding: 10px 20px;
+    }
+
+
+    /* =========================
+       睡眠時間入力
+       ========================= */
+
+    .sleep-input {
+      text-align: center;
+      font-size: 22px;
+    }
+
+    .sleep-input input {
+      width: 80px;
+      font-size: 22px;
+      padding: 8px;
+      margin: 0 5px;
+    }
+
+  </style>
+
+</head>
+
+
+<body></body>
+
+
+<script>
+
+  // ==================================================
+  // jsPsych
+  // ==================================================
+
+  const jsPsych = initJsPsych();
+
+  const timeline = [];
+
+
+
+  // ==================================================
+  // 前半：戻る・次へを使ったナビゲーション
+  // ==================================================
+
+  let pre_page = 0;
+
+  let participant_age = null;
+  let participant_gender = null;
+
+  let sleep_hours = null;
+  let sleep_minutes = null;
+  let sleep_duration = null;
+
+  function get_pre_stimulus() {
+
+    if (pre_page === 0) {
+      return `
+        <div class="instruction">
+          <h2>大学生の講義中における<br>思考と睡眠時間に関する研究</h2>
+        </div>
+      `;
+    }
+
+    if (pre_page === 1) {
+      return `
+        <div class="instruction">
+          <h2>研究について</h2>
+          <p>本研究は、関西大学社会学部の卒業研究の一環として実施するものです。この研究では、大学生が講義を受講している際の思考と睡眠時間の関連について調べることを目的としています。</p>
+          <p>実験では、心理学に関する講義動画を視聴していただき、動画視聴中に表示される質問への回答と、講義内容に関する問題への回答を求めます。</p>
+          <p>また、普段の睡眠時間について回答していただきます。</p>
+          <p>実験にかかる時間は、およそ20分程度を予定しています。</p>
+        </div>
+      `;
+    }
+
+    if (pre_page === 2) {
+      return `
+        <div class="instruction">
+          <h2>研究参加への同意</h2>
+          <p>実験への回答は全て匿名で行われ、個人が特定されることはありません。得られたデータは本研究の目的以外には使用せず、適切に管理いたします。研究への参加は任意です。参加しない場合や、途中で参加を中止した場合でも、不利益を受けることはありません。</p>
+          <p>ご不明な点がありましたら、下記までご連絡ください。</p>
+          <p>研究実施者　関西大学社会学部心理学専攻<br>氏名　細川芽生（k187988@kansai-u.ac.jp）</p>
+        </div>
+      `;
+    }
+
+    if (pre_page === 3) {
+      return `
+        <div class="instruction">
+          <p>これから実験を開始します。</p>
+          <p>画面に表示される説明をよく読んで、指示に従ってください。</p>
+        </div>
+      `;
+    }
+
+    if (pre_page === 4) {
+      return `
+        <div class="instruction">
+          <h2>実験参加時の注意事項</h2>
+          <p>・できるだけ静かで集中できる環境で実験を行ってください。</p>
+          <p>・実験中は、他の作業を行わず、画面に集中してください。</p>
+          <p>・講義動画は最後まで視聴してください。</p>
+          <p>・動画視聴中に質問が表示された場合は、その質問に回答してください。</p>
+          <p>・スマートフォンを使用する場合は、通信環境が安定した場所で実験を行ってください。</p>
+        </div>
+      `;
+    }
+
+    if (pre_page === 5) {
+      return `
+        <div class="instruction">
+          <h2>基本情報</h2>
+          <p>年齢と性別について回答してください。</p>
+          <div class="sleep-input">
+            <p>年齢：
+              <input type="number" id="participant-age" min="18" max="100" step="1"
+                value="${participant_age === null ? "" : participant_age}"> 歳
+            </p>
+            <p>性別：
+              <select id="participant-gender" style="font-size: 22px; padding: 8px;">
+                <option value="">選択してください</option>
+                <option value="男性" ${participant_gender === "男性" ? "selected" : ""}>男性</option>
+                <option value="女性" ${participant_gender === "女性" ? "selected" : ""}>女性</option>
+                <option value="その他" ${participant_gender === "その他" ? "selected" : ""}>その他</option>
+                <option value="回答しない" ${participant_gender === "回答しない" ? "selected" : ""}>回答しない</option>
+              </select>
+            </p>
+          </div>
+        </div>
+      `;
+    }
+
+    if (pre_page === 6) {
+      return `
+        <div class="instruction">
+          <h2>睡眠時間について</h2>
+          <p>これから、あなたの普段の睡眠時間についてお尋ねします。</p>
+          <p>過去1か月間の普段の生活を思い出して、平日・休日を含めた平均的な睡眠時間を回答してください。</p>
+          <p>「ベッドに入っていた時間」ではなく、実際に眠っていた時間を回答してください。</p>
+        </div>
+      `;
+    }
+
+    if (pre_page === 7) {
+      return `
+        <div class="instruction">
+          <h2>普段の睡眠時間</h2>
+          <p>過去1か月間の、あなたの普段の平均的な睡眠時間について教えてください。</p>
+          <p>平日・休日を含め、普段の生活において、実際に眠っている時間は平均して1日何時間くらいですか。</p>
+          <div class="sleep-input">
+            <p>
+              <input type="number" id="sleep-hours" min="0" max="24" step="1"
+                value="${sleep_hours === null ? "" : sleep_hours}"> 時間
+              <input type="number" id="sleep-minutes" min="0" max="59" step="1"
+                value="${sleep_minutes === null ? "" : sleep_minutes}"> 分
+            </p>
+          </div>
+        </div>
+      `;
+    }
+
+    if (pre_page === 8) {
+      return `
+        <div class="instruction">
+          <h2>講義動画について</h2>
+          <p>これから約15分間の心理学講義動画を視聴していただきます。</p>
+          <p>講義内容を理解するように注意して、動画を視聴してください。</p>
+          <p>動画は、質問が表示されたときのみ一時停止します。</p>
+          <p>準備ができたら「動画を開始する」を押してください。</p>
+        </div>
+      `;
+    }
+
+    if (pre_page === 9) {
+      return `
+        <div class="instruction">
+          <h2>動画視聴中の質問について</h2>
+          <p>動画視聴中、途中で「今、何を考えていましたか？」という質問が表示されます。</p>
+          <p>質問が表示されたら、<strong>質問が表示される直前に考えていたこと</strong>について回答してください。</p>
+          <p>回答後は、動画が再開します。</p>
+          <p>質問が表示されてから<strong>15秒以内</strong>に回答してください。15秒以内に回答がない場合は、自動的に動画が再開します。</p>
+          <p>回答に迷った場合も、自分の考えに最も近い方を選択してください。</p>
+        </div>
+      `;
+    }
+  }
+
+
+  function get_pre_choices() {
+
+    if (pre_page === 2) {
+      return ["戻る", "同意して実験を続ける", "同意しない"];
+    }
+
+    if (pre_page === 8) {
+      return pre_page === 0 ? ["動画を開始する"] : ["戻る", "動画を開始する"];
+    }
+
+    if (pre_page === 0) {
+      return ["次へ"];
+    }
+
+    return ["戻る", "次へ"];
+  }
+
+
+  const pre_navigation_trial = {
+    type: jsPsychHtmlButtonResponse,
+
+    stimulus: function() {
+      return get_pre_stimulus();
+    },
+
+    choices: function() {
+      return get_pre_choices();
+    },
+
+    on_load: function() {
+
+      // 年齢・性別
+      if (pre_page === 5) {
+
+        const age_input = document.querySelector("#participant-age");
+        const gender_input = document.querySelector("#participant-gender");
+
+        if (age_input && gender_input) {
+
+          age_input.addEventListener("input", function() {
+            participant_age = this.value === "" ? null : Number(this.value);
+          });
+
+          gender_input.addEventListener("change", function() {
+            participant_gender = this.value === "" ? null : this.value;
+          });
+
+          const buttons = document.querySelectorAll(".jspsych-btn");
+          const next_button = buttons[buttons.length - 1];
+
+          next_button.addEventListener("click", function(event) {
+
+            if (age_input.value === "" || gender_input.value === "") {
+              event.preventDefault();
+              event.stopImmediatePropagation();
+              alert("年齢と性別を入力してください。");
+              return;
+            }
+
+            const age = Number(age_input.value);
+
+            if (age < 18 || age > 100) {
+              event.preventDefault();
+              event.stopImmediatePropagation();
+              alert("年齢は18～100歳の範囲で入力してください。");
+            }
+
+          }, true);
+
+        }
+      }
+
+
+      // 睡眠時間
+      if (pre_page === 7) {
+
+        const hours_input = document.querySelector("#sleep-hours");
+        const minutes_input = document.querySelector("#sleep-minutes");
+
+        if (hours_input && minutes_input) {
+
+          hours_input.addEventListener("input", function() {
+            sleep_hours = this.value === "" ? null : Number(this.value);
+          });
+
+          minutes_input.addEventListener("input", function() {
+            sleep_minutes = this.value === "" ? null : Number(this.value);
+          });
+
+          const buttons = document.querySelectorAll(".jspsych-btn");
+          const next_button = buttons[buttons.length - 1];
+
+          next_button.addEventListener("click", function(event) {
+
+            if (hours_input.value === "" || minutes_input.value === "") {
+              event.preventDefault();
+              event.stopImmediatePropagation();
+              alert("睡眠時間を入力してください。");
+              return;
+            }
+
+            const hours = Number(hours_input.value);
+            const minutes = Number(minutes_input.value);
+
+            if (hours < 0 || hours > 24) {
+              event.preventDefault();
+              event.stopImmediatePropagation();
+              alert("「時間」は0～24の範囲で入力してください。");
+              return;
+            }
+
+            if (minutes < 0 || minutes > 59) {
+              event.preventDefault();
+              event.stopImmediatePropagation();
+              alert("「分」は0～59の範囲で入力してください。");
+            }
+
+          }, true);
+
+        }
+      }
+
+    },
+
+    on_finish: function(data) {
+
+      data.nav_page = pre_page;
+
+      // 同意画面
+      if (pre_page === 2) {
+
+        // 戻る
+        if (data.response === 0) {
+          pre_page--;
+          return;
+        }
+
+        // 同意する
+        if (data.response === 1) {
+          data.consent = "同意";
+          console.log("研究参加：同意");
+          pre_page++;
+          return;
+        }
+
+        // 同意しない
+        if (data.response === 2) {
+          data.consent = "不同意";
+
+          jsPsych.abortExperiment(`
+            <div class="instruction">
+              <h2>実験を終了します</h2>
+              <p>研究への参加に同意されなかったため、実験を終了します。</p>
+            </div>
+          `);
+
+          return;
+        }
+      }
+
+
+      // 基本情報
+      if (pre_page === 5) {
+        data.age = participant_age;
+        data.gender = participant_gender;
+      }
+
+
+      // 睡眠時間
+      if (pre_page === 7) {
+        sleep_duration = sleep_hours + sleep_minutes / 60;
+
+        data.sleep_hours = sleep_hours;
+        data.sleep_minutes = sleep_minutes;
+        data.sleep_duration = sleep_duration;
+
+        console.log("睡眠時間：", sleep_duration, "時間");
+      }
+
+
+      // 戻る
+      if (data.response === 0 && pre_page > 0) {
+        pre_page--;
+        return;
+      }
+
+
+      // 次へ
+      if (data.response === 0 || data.response === 1) {
+
+        // page 0: 次へ
+        if (pre_page === 0) {
+          pre_page++;
+        }
+
+        // pages 1, 3-7, 9: 次へ
+        else if (pre_page !== 2 && pre_page !== 8) {
+          if (data.response === 1) {
+            pre_page++;
+          }
+        }
+
+        // page 8: 動画開始前の最後の教示
+        else if (pre_page === 8) {
+          if (data.response === 1) {
+            pre_page++;
+          }
+        }
+
+      }
+
+    }
+  };
+
+
+  const pre_navigation = {
+    timeline: [pre_navigation_trial],
+    loop_function: function() {
+      return pre_page < 10;
+    }
+  };
+
+  timeline.push(pre_navigation);
+
+
+  // ==================================================
+  // Probe設定
+  // ==================================================
+
+  const probe_times = [
+
+    140,  // 2:20
+    280,  // 4:40
+    420,  // 7:00
+    560,  // 9:20
+    700,  // 11:40
+    840   // 14:00
+
+  ];
+
+
+  let current_probe = 0;
+
+  let probe_active = false;
+
+  let probe_timeout = null;
+
+
+  const probe_answers = [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+  ];
+
+
+  // ==================================================
+  // 10．講義動画
+  // ==================================================
+
+  const lecture_video = {
+
+    type: jsPsychHtmlButtonResponse,
+
+    stimulus: `
+
+      <div id="video-container">
+
+        <video
+          id="lecture-video"
+          controls
+          preload="auto"
+          playsinline
+        >
+
+          <source
+            src="講義動画720p.mp4"
+            type="video/mp4">
+
+        </video>
+
+        <div id="video-start-overlay">
+          <button id="video-start-button" class="jspsych-btn">動画を開始する</button>
+        </div>
+
+
+        <div id="probe-overlay">
+
+          <p>
+            今、何を考えていましたか？
+          </p>
+
+
+          <button
+            class="jspsych-btn"
+            id="probe-related">
+
+            動画内容について考えていた
+
+          </button>
+
+
+          <button
+            class="jspsych-btn"
+            id="probe-unrelated">
+
+            動画内容とは関係のないことについて考えていた
+
+          </button>
+
+        </div>
+
+      </div>
+
+    `,
+
+    choices: [],
+
+
+    // --------------------------------------------------
+    // 動画trial開始時
+    // --------------------------------------------------
+
+    on_load: function() {
+
+      const video =
+        document.querySelector(
+          "#lecture-video"
+        );
+
+      const overlay =
+        document.querySelector(
+          "#probe-overlay"
+        );
+
+      const start_overlay = document.querySelector("#video-start-overlay");
+      const start_button = document.querySelector("#video-start-button");
+
+      video.playbackRate = 1;
+      video.defaultPlaybackRate = 1;
+
+      start_button.addEventListener("click", function() {
+        start_overlay.style.display = "none";
+        video.play().catch(function(error) {
+          console.log("動画再生エラー：", error);
+          start_overlay.style.display = "flex";
+          alert("動画を開始できませんでした。もう一度「動画を開始する」を押してください。");
+        });
+      });
+
+
+      // ==================================================
+      // 動画時間を監視
+      // ==================================================
+
+      video.addEventListener(
+        "timeupdate",
+        function() {
+
+
+          if (
+            current_probe >=
+            probe_times.length
+          ) {
+
+            return;
+
+          }
+
+
+          if (probe_active) {
+
+            return;
+
+          }
+
+
+          const current_time =
+            video.currentTime;
+
+          const target_time =
+            probe_times[current_probe];
+
+
+          if (
+            current_time >= target_time
+          ) {
+
+            show_probe();
+
+          }
+
+        }
+      );
+
+
+      // ==================================================
+      // 動画終了
+      // ==================================================
+
+      video.addEventListener(
+        "ended",
+        function() {
+
+
+          console.log(
+            "動画が終了しました"
+          );
+
+
+          // ------------------------------------------------
+          // MW得点
+          // ------------------------------------------------
+
+          let mind_wandering_count = 0;
+
+
+          for (
+            let i = 0;
+            i < probe_answers.length;
+            i++
+          ) {
+
+            if (
+              probe_answers[i] ===
+              "動画内容とは関係のないことについて考えていた"
+            ) {
+
+              mind_wandering_count++;
+
+            }
+
+          }
+
+
+          // ------------------------------------------------
+          // 0 / 1データ
+          // ------------------------------------------------
+
+          const probe_binary = {};
+
+
+          for (
+            let i = 0;
+            i < 6;
+            i++
+          ) {
+
+            if (
+              probe_answers[i] ===
+              "動画内容とは関係のないことについて考えていた"
+            ) {
+
+              probe_binary[
+                "probe" + (i + 1)
+              ] = 1;
+
+            }
+
+            else if (
+              probe_answers[i] ===
+              "動画内容について考えていた"
+            ) {
+
+              probe_binary[
+                "probe" + (i + 1)
+              ] = 0;
+
+            }
+
+            else {
+
+              probe_binary[
+                "probe" + (i + 1)
+              ] = null;
+
+            }
+
+          }
+
+
+          console.log(
+            "Probe回答一覧：",
+            probe_answers
+          );
+
+
+          console.log(
+            "マインドワンダリング得点：",
+            mind_wandering_count
+          );
+
+
+          // ------------------------------------------------
+          // データ保存
+          // ------------------------------------------------
+
+          jsPsych.finishTrial({
+
+            probe1_raw: probe_answers[0],
+            probe2_raw: probe_answers[1],
+            probe3_raw: probe_answers[2],
+            probe4_raw: probe_answers[3],
+            probe5_raw: probe_answers[4],
+            probe6_raw: probe_answers[5],
+
+            probe1: probe_binary.probe1,
+            probe2: probe_binary.probe2,
+            probe3: probe_binary.probe3,
+            probe4: probe_binary.probe4,
+            probe5: probe_binary.probe5,
+            probe6: probe_binary.probe6,
+
+            mind_wandering_count:
+              mind_wandering_count
+
+          });
+
+        }
+      );
+
+    }
+
+  };
+  
+timeline.push(lecture_video);
+
+
+  // ==================================================
+  // Probe表示
+  // ==================================================
+
+  function show_probe() {
+
+
+    // 多重表示を防ぐ
+    probe_active = true;
+
+
+    const video =
+      document.querySelector(
+        "#lecture-video"
+      );
+
+    const overlay =
+      document.querySelector(
+        "#probe-overlay"
+      );
+
+
+    video.pause();
+
+
+    console.log(
+      "Probe " +
+      (current_probe + 1) +
+      " 表示"
+    );
+
+
+    overlay.style.display = "flex";
+
+
+    // ==================================================
+    // 15秒タイマー
+    // ==================================================
+
+    probe_timeout =
+      setTimeout(function() {
+
+
+        probe_answers[current_probe] =
+          "無回答";
+
+
+        console.log(
+          "Probe " +
+          (current_probe + 1) +
+          "：無回答"
+        );
+
+
+        overlay.style.display =
+          "none";
+
+
+        probe_active = false;
+
+
+        current_probe++;
+
+
+        video.play();
+
+
+      }, 15000);
+
+
+    // ==================================================
+    // ボタン
+    // ==================================================
+
+    document.querySelector(
+      "#probe-related"
+    ).onclick = function() {
+
+
+      answer_probe(
+        "動画内容について考えていた"
+      );
+
+    };
+
+
+    document.querySelector(
+      "#probe-unrelated"
+    ).onclick = function() {
+
+
+      answer_probe(
+        "動画内容とは関係のないことについて考えていた"
+      );
+
+    };
+
+  }
+
+
+  // ==================================================
+  // Probe回答
+  // ==================================================
+
+  function answer_probe(answer) {
+
+
+    clearTimeout(
+      probe_timeout
+    );
+
+
+    probe_answers[current_probe] =
+      answer;
+
+
+    console.log(
+      "Probe " +
+      (current_probe + 1) +
+      "：" +
+      answer
+    );
+
+
+    const overlay =
+      document.querySelector(
+        "#probe-overlay"
+      );
+
+
+    overlay.style.display =
+      "none";
+
+
+    probe_active = false;
+
+
+    current_probe++;
+
+
+    const video =
+      document.querySelector(
+        "#lecture-video"
+      );
+
+
+    video.play();
+
+  }
+
+
+
+
+
+  // ==================================================
+  // 後半：理解度テストの戻る・次へ
+  // ==================================================
+
+  let post_page = 0;
+
+  let q1_answer = null;
+  let q2_answer = null;
+  let q3_answer = null;
+
+  function get_post_stimulus() {
+
+    if (post_page === 0) {
+      return `
+        <div class="instruction">
+          <h2>講義内容の理解度テスト</h2>
+          <p>これから、先ほどの講義動画の内容について3問の問題を提示します。</p>
+          <p>それぞれの問題について、最も適切だと思うものを1つ選択してください。</p>
+        </div>
+      `;
+    }
+
+    if (post_page === 1) {
+      return `
+        <div class="question">
+          <p>
+            <strong>
+              問1．記憶の過程として、
+              講義で説明されたものはどれですか？
+            </strong>
+          </p>
+        </div>
+      `;
+    }
+
+    if (post_page === 2) {
+      return `
+        <div class="question">
+          <p>
+            <strong>
+              問2．長期記憶のうち、
+              自転車の乗り方などの「技能」に関する
+              記憶を何といいますか？
+            </strong>
+          </p>
+        </div>
+      `;
+    }
+
+    if (post_page === 3) {
+      return `
+        <div class="question">
+          <p>
+            <strong>
+              問3．覚えた情報を、
+              時間が経って思い出せなくなることを
+              何といいますか？
+            </strong>
+          </p>
+        </div>
+      `;
+    }
+
+  }
+
+
+  function get_post_choices() {
+
+    if (post_page === 0) {
+      return ["次へ"];
+    }
+
+    if (post_page === 1) {
+      return [
+        "戻る",
+        "① 記銘・保持・想起",
+        "② 知覚・感情・行動",
+        "③ 注意・判断・行動",
+        "④ 理解・推測・判断"
+      ];
+    }
+
+    if (post_page === 2) {
+      return [
+        "戻る",
+        "① 宣言的記憶",
+        "② 手続き的記憶",
+        "③ 感覚記憶",
+        "④ 短期記憶"
+      ];
+    }
+
+    if (post_page === 3) {
+      return [
+        "戻る",
+        "① 再認",
+        "② 体制化",
+        "③ 忘却",
+        "④ 精緻化"
+      ];
+    }
+
+  }
+
+
+  const post_navigation_trial = {
+
+    type: jsPsychHtmlButtonResponse,
+
+    stimulus: function() {
+      return get_post_stimulus();
+    },
+
+    choices: function() {
+      return get_post_choices();
+    },
+
+    on_finish: function(data) {
+
+      data.nav_page = post_page;
+
+
+      // ------------------------------------------------
+      // 説明画面
+      // ------------------------------------------------
+
+      if (post_page === 0) {
+
+        post_page++;
+        return;
+      }
+
+
+      // ------------------------------------------------
+      // 問1
+      // ------------------------------------------------
+
+      if (post_page === 1) {
+
+        if (data.response === 0) {
+          post_page--;
+          return;
+        }
+
+        q1_answer = data.response - 1;
+
+        data.question = "Q1";
+        data.correct = q1_answer === 0;
+
+        console.log("Q1正解判定：", data.correct);
+
+        post_page++;
+        return;
+      }
+
+
+      // ------------------------------------------------
+      // 問2
+      // ------------------------------------------------
+
+      if (post_page === 2) {
+
+        if (data.response === 0) {
+          post_page--;
+          return;
+        }
+
+        q2_answer = data.response - 1;
+
+        data.question = "Q2";
+        data.correct = q2_answer === 1;
+
+        console.log("Q2正解判定：", data.correct);
+
+        post_page++;
+        return;
+      }
+
+
+      // ------------------------------------------------
+      // 問3
+      // ------------------------------------------------
+
+      if (post_page === 3) {
+
+        if (data.response === 0) {
+          post_page--;
+          return;
+        }
+
+        q3_answer = data.response - 1;
+
+        data.question = "Q3";
+        data.correct = q3_answer === 2;
+
+        console.log("Q3正解判定：", data.correct);
+
+        post_page++;
+        return;
+      }
+
+    }
+
+  };
+
+
+  const post_navigation = {
+
+    timeline: [post_navigation_trial],
+
+    loop_function: function() {
+      return post_page < 4;
+    }
+
+  };
+
+  timeline.push(post_navigation);
+
+
+  // ==================================================
+  // 最終終了画面
+  // ==================================================
+
+  timeline.push({
+
+    type: jsPsychHtmlButtonResponse,
+
+    stimulus: `
+      <div class="instruction">
+
+        <h2>ご協力ありがとうございました</h2>
+
+        <p>
+          以上で実験は終了です。
+        </p>
+
+        <p>
+          「終了」ボタンを押して、実験を終了してください。
+        </p>
+
+        <p>
+          ご参加いただき、ありがとうございました。
+        </p>
+
+      </div>
+    `,
+
+    choices: ["終了"],
+
+    on_finish: function(data) {
+
+      const q1_correct = q1_answer === 0;
+      const q2_correct = q2_answer === 1;
+      const q3_correct = q3_answer === 2;
+
+      const comprehension_score =
+        Number(q1_correct) +
+        Number(q2_correct) +
+        Number(q3_correct);
+
+      data.Q1_correct = q1_correct;
+      data.Q2_correct = q2_correct;
+      data.Q3_correct = q3_correct;
+      data.comprehension_score = comprehension_score;
+
+      console.log("Q1正解：", q1_correct);
+      console.log("Q2正解：", q2_correct);
+      console.log("Q3正解：", q3_correct);
+      console.log("理解度得点：", comprehension_score);
+
+    }
+
+  });
+
+
+  // ==================================================
+  // 実験開始
+  // ==================================================
+
+  jsPsych.run(timeline);
+
+
+</script>
+
+</html>
