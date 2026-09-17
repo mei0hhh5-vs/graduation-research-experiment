@@ -634,6 +634,41 @@
       video.playbackRate = 1;
       video.defaultPlaybackRate = 1;
 
+      // ==================================================
+      // 動画操作の制限
+      // ・シーク（早送り・巻き戻し）を禁止
+      // ・再生速度を1倍に固定
+      // ==================================================
+
+      let last_allowed_time = 0;
+      let internal_seek = false;
+
+      // 通常再生中の位置を記録
+      video.addEventListener("timeupdate", function() {
+        if (!video.seeking && !probe_active) {
+          last_allowed_time = video.currentTime;
+        }
+      });
+
+      // シークされた場合は直前の再生位置へ戻す
+      video.addEventListener("seeking", function() {
+        if (!internal_seek) {
+          internal_seek = true;
+          video.currentTime = last_allowed_time;
+        }
+      });
+
+      video.addEventListener("seeked", function() {
+        internal_seek = false;
+      });
+
+      // 再生速度が変更された場合は1倍へ戻す
+      video.addEventListener("ratechange", function() {
+        if (video.playbackRate !== 1) {
+          video.playbackRate = 1;
+        }
+      });
+
       start_button.addEventListener("click", function() {
         start_overlay.style.display = "none";
         video.play().catch(function(error) {
