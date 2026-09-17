@@ -1235,10 +1235,54 @@ timeline.push(lecture_video);
         Number(q2_correct) +
         Number(q3_correct);
 
-      data.Q1_correct = q1_correct;
-      data.Q2_correct = q2_correct;
-      data.Q3_correct = q3_correct;
+      // ------------------------------------------------
+      // 分析用：1参加者 = 1行になるよう、必要な値をこの最終行に集約
+      // ------------------------------------------------
+
+      const gender_code =
+        participant_gender === "男性" ? 1 :
+        participant_gender === "女性" ? 2 :
+        participant_gender === "その他" ? 3 :
+        participant_gender === "回答しない" ? 9 : null;
+
+      const probe_binary = probe_answers.map(function(answer) {
+        if (answer === "動画内容とは関係のないことについて考えていた") return 1;
+        if (answer === "動画内容について考えていた") return 0;
+        return null;
+      });
+
+      const mind_wandering_count = probe_binary.filter(function(x) {
+        return x === 1;
+      }).length;
+
+      const has_missing_probe = probe_binary.some(function(x) {
+        return x === null;
+      });
+
+      data.subject_id = subject_id;
+      data.age = participant_age;
+      data.gender_code = gender_code;
+      data.sleep_hours = sleep_hours;
+      data.sleep_minutes = sleep_minutes;
+      data.sleep_duration = sleep_duration;
+
+      data.probe1 = probe_binary[0];
+      data.probe2 = probe_binary[1];
+      data.probe3 = probe_binary[2];
+      data.probe4 = probe_binary[3];
+      data.probe5 = probe_binary[4];
+      data.probe6 = probe_binary[5];
+      data.mind_wandering_count = mind_wandering_count;
+      data.exclude_missing_probe = has_missing_probe ? 1 : 0;
+
+      data.Q1_answer = q1_answer === null ? null : q1_answer + 1;
+      data.Q2_answer = q2_answer === null ? null : q2_answer + 1;
+      data.Q3_answer = q3_answer === null ? null : q3_answer + 1;
+      data.Q1_correct = q1_correct ? 1 : 0;
+      data.Q2_correct = q2_correct ? 1 : 0;
+      data.Q3_correct = q3_correct ? 1 : 0;
       data.comprehension_score = comprehension_score;
+      data.complete = 1;
 
       console.log("Q1正解：", q1_correct);
       console.log("Q2正解：", q2_correct);
@@ -1259,7 +1303,8 @@ timeline.push(lecture_video);
     action: "save",
     experiment_id: "8FAIuUxho7QR",
     filename: filename,
-    data_string: () => jsPsych.data.get().csv()
+    // 最終終了画面の1行だけを保存する
+    data_string: () => jsPsych.data.get().last(1).csv()
   };
 
   timeline.push(save_data);
@@ -1274,7 +1319,7 @@ timeline.push(lecture_video);
     stimulus: `
       <div class="instruction">
         <h2>実験は終了しました</h2>
-        <p>回答データの送信が完了しました。</p>
+        <p>回答処理が終了しました。</p>
         <p>このページを閉じてください。</p>
         <p>ご参加いただき、ありがとうございました。</p>
       </div>
