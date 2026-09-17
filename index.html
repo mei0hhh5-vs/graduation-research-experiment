@@ -1344,7 +1344,7 @@ timeline.push(lecture_video);
       const header = columns.join(",");
       const row = columns.map(name => csvEscape(d[name])).join(",");
 
-      return header + "\\n" + row;
+      return header + "\n" + row;
     }
   };
 
