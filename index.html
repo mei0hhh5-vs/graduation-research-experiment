@@ -1303,8 +1303,48 @@ timeline.push(lecture_video);
     action: "save",
     experiment_id: "8FAIuUxho7QR",
     filename: filename,
-    // 最終終了画面の1行だけを保存する
-    data_string: () => jsPsych.data.get().last(1).csv()
+    // 卒論の分析に必要な列だけを、1参加者＝1行で保存する
+    data_string: () => {
+      const d = jsPsych.data.get().last(1).values()[0];
+
+      const columns = [
+        "subject_id",
+        "age",
+        "gender_code",
+        "sleep_hours",
+        "sleep_minutes",
+        "sleep_duration",
+        "probe1",
+        "probe2",
+        "probe3",
+        "probe4",
+        "probe5",
+        "probe6",
+        "mind_wandering_count",
+        "exclude_missing_probe",
+        "Q1_answer",
+        "Q2_answer",
+        "Q3_answer",
+        "Q1_correct",
+        "Q2_correct",
+        "Q3_correct",
+        "comprehension_score",
+        "complete"
+      ];
+
+      const csvEscape = (value) => {
+        if (value === null || value === undefined) return "";
+        const text = String(value);
+        return /[",\\n\\r]/.test(text)
+          ? '"' + text.replace(/"/g, '""') + '"'
+          : text;
+      };
+
+      const header = columns.join(",");
+      const row = columns.map(name => csvEscape(d[name])).join(",");
+
+      return header + "\\n" + row;
+    }
   };
 
   timeline.push(save_data);
